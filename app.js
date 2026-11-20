@@ -24,8 +24,10 @@ Object.keys(MARGENS_PADRAO).forEach(k => {
 let ajustesProdutos = JSON.parse(localStorage.getItem("bipou_ajustes_produtos")) || {};
 
 let categoriaSelecionada = "todas";
-// Por padrão deixa o Custo NF oculto para não poluir o visual no celular/balcão (basta clicar em "👁️ Custo NF" se quiser ver)
+// Por padrão deixa o Custo NF oculto para não poluir o visual no celular/balcão
 let mostrarCustos = false;
+// Permite esconder ou mostrar a coluna de Margem (%) com o botão do olho
+let mostrarMargem = JSON.parse(localStorage.getItem("bipou_mostrar_margem") ?? "true");
 
 function getProdutoId(p) {
   return `${p.nf}_${p.cod}`;
@@ -230,6 +232,10 @@ function renderizarProdutos() {
     el.style.display = mostrarCustos ? "" : "none";
   });
 
+  document.querySelectorAll(".col-margem").forEach(el => {
+    el.style.display = mostrarMargem ? "" : "none";
+  });
+
   if (filtrados.length === 0) {
     tbody.innerHTML = `
       <tr>
@@ -297,7 +303,7 @@ function renderizarProdutos() {
           <div class="cost-text">Custo: <strong>${formatarMoeda(p.custoUnit)}</strong></div>
           ${p.qtdEmb > 1 ? `<div class="pack-detail">${p.undCompra}: ${formatarMoeda(p.custoEmb)}</div>` : ""}
         </td>
-        <td class="cell-margin">
+        <td class="cell-margin col-margem" style="${mostrarMargem ? "" : "display:none;"}">
           <div class="inline-edit-group ${isCustom ? 'custom-active' : ''}">
             <span>+</span>
             <input
@@ -414,7 +420,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const marginsPanel = document.getElementById("marginsPanel");
   const resetMarginsBtn = document.getElementById("resetMarginsBtn");
   const toggleCostBtn = document.getElementById("toggleCostBtn");
+  const toggleMarginColBtn = document.getElementById("toggleMarginColBtn");
 
+  function atualizarBotaoMargem() {
+    if (!toggleMarginColBtn) return;
+    toggleMarginColBtn.classList.toggle("active-toggle", mostrarMargem);
+    toggleMarginColBtn.innerHTML = mostrarMargem ? "👁️ Margem %" : "🙈 Margem %";
+  }
+
+  atualizarBotaoMargem();
   renderizarPainelMargens();
   renderizarCategorias();
   renderizarProdutos();
@@ -450,8 +464,18 @@ document.addEventListener("DOMContentLoaded", () => {
   toggleCostBtn.addEventListener("click", () => {
     mostrarCustos = !mostrarCustos;
     toggleCostBtn.classList.toggle("active-toggle", mostrarCustos);
+    toggleCostBtn.innerHTML = mostrarCustos ? "👁️ Custo" : "🙈 Custo";
     renderizarProdutos();
   });
+
+  if (toggleMarginColBtn) {
+    toggleMarginColBtn.addEventListener("click", () => {
+      mostrarMargem = !mostrarMargem;
+      localStorage.setItem("bipou_mostrar_margem", JSON.stringify(mostrarMargem));
+      atualizarBotaoMargem();
+      renderizarProdutos();
+    });
+  }
 
   document.addEventListener("keydown", e => {
     if (e.key === "F2" || (e.key === "/" && document.activeElement.tagName !== "INPUT")) {
