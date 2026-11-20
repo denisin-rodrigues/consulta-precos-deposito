@@ -2,16 +2,16 @@
 const MARGENS_PADRAO = {
   cerveja: { nome: "🍺 Cerveja", perc: 18 },
   destilado: { nome: "🥃 Destilado", perc: 30 },
-  vinho: { nome: "🍷 Vinho / Espumante", perc: 25 },
+  vinho: { nome: "🍷 Vinho", perc: 25 },
   refri: { nome: "🥤 Refri / Suco", perc: 18 },
   agua_com_gas: { nome: "💧 Água c/ Gás", perc: 25 },
   agua_sem_gas: { nome: "💧 Água s/ Gás", perc: 20 },
   energetico: { nome: "⚡ Energético", perc: 25 },
   ice: { nome: "🍹 Ice / Beats", perc: 20 },
-  batatas: { nome: "🍟 Batatas / Salgadinhos", perc: 18 },
-  molhos: { nome: "🥫 Molhos / Alimentos", perc: 18 },
+  batatas: { nome: "🍟 Salgadinhos", perc: 18 },
+  molhos: { nome: "🥫 Alimentos", perc: 18 },
   balas: { nome: "🍬 Balas / Doces", perc: 20 },
-  sorvete: { nome: "🍦 Sorvetes / Picolés", perc: 25 }
+  sorvete: { nome: "🍦 Sorvetes", perc: 25 }
 };
 
 let margensAtuais = JSON.parse(localStorage.getItem("bipou_margens_consulta")) || {};
@@ -21,12 +21,11 @@ Object.keys(MARGENS_PADRAO).forEach(k => {
   }
 });
 
-// Ajustes individuais por produto (chave única: nf_cod)
-// Formato: { [id]: { margemCustom?: number, precoUnitCustom?: number, precoEmbCustom?: number } }
 let ajustesProdutos = JSON.parse(localStorage.getItem("bipou_ajustes_produtos")) || {};
 
 let categoriaSelecionada = "todas";
-let mostrarCustos = true;
+// Por padrão deixa o Custo NF oculto para não poluir o visual no celular/balcão (basta clicar em "👁️ Custo NF" se quiser ver)
+let mostrarCustos = false;
 
 function getProdutoId(p) {
   return `${p.nf}_${p.cod}`;
@@ -133,17 +132,16 @@ function renderizarCategorias() {
 
   let html = `
     <button class="cat-btn ${categoriaSelecionada === 'todas' ? 'active' : ''}" data-cat="todas">
-      📦 Todos <span class="cat-count">${contagens.todas}</span>
+      Todos <span class="cat-count">${contagens.todas}</span>
     </button>
   `;
 
   Object.keys(MARGENS_PADRAO).forEach(catKey => {
     const info = MARGENS_PADRAO[catKey];
     const qtd = contagens[catKey] || 0;
-    const m = margensAtuais[catKey];
     html += `
       <button class="cat-btn ${categoriaSelecionada === catKey ? 'active' : ''}" data-cat="${catKey}">
-        ${info.nome} (${m}%) <span class="cat-count">${qtd}</span>
+        ${info.nome} <span class="cat-count">${qtd}</span>
       </button>
     `;
   });
@@ -168,15 +166,13 @@ function atualizarSpotlight(produto) {
     return;
   }
 
-  const margem = getMargemProduto(produto);
   const precoUnitFinal = getPrecoUnitFinal(produto);
   const precoEmbFinal = getPrecoEmbFinal(produto);
   const catInfo = MARGENS_PADRAO[produto.cat];
-  const isCustom = temAjusteIndividual(produto);
 
   let htmlPrecos = `
     <div class="price-box main">
-      <span class="label">PREÇO CLIENTE (UNIDADE) ${isCustom ? '⭐ AJUSTADO' : ''}</span>
+      <span class="label">Unidade</span>
       <span class="value">${formatarMoeda(precoUnitFinal)}</span>
     </div>
   `;
@@ -184,7 +180,7 @@ function atualizarSpotlight(produto) {
   if (produto.qtdEmb > 1) {
     htmlPrecos += `
       <div class="price-box pack">
-        <span class="label">PREÇO ${produto.undCompra} (C/${produto.qtdEmb} UN)</span>
+        <span class="label">${produto.undCompra} c/${produto.qtdEmb} un</span>
         <span class="value">${formatarMoeda(precoEmbFinal)}</span>
       </div>
     `;
@@ -194,10 +190,9 @@ function atualizarSpotlight(produto) {
     <div class="spotlight-info">
       <h2>${produto.desc}</h2>
       <div class="spotlight-meta">
-        <span><strong>Categoria:</strong> ${catInfo ? catInfo.nome : produto.cat} (+${margem.toFixed(1).replace('.0', '')}%)</span>
-        <span><strong>EAN / Código de Barras:</strong> ${produto.ean}</span>
-        <span><strong>Cód. NF:</strong> ${produto.cod} (NF ${produto.nf})</span>
-        ${mostrarCustos ? `<span><strong>Custo Unit. NF:</strong> ${formatarMoeda(produto.custoUnit)}</span>` : ""}
+        <span>${catInfo ? catInfo.nome : produto.cat}</span>
+        ${produto.ean !== "SEM GTIN" ? `<span>EAN: ${produto.ean}</span>` : ""}
+        <span>Cód: ${produto.cod}</span>
       </div>
     </div>
     <div class="spotlight-prices">
@@ -227,7 +222,7 @@ function renderizarProdutos() {
   });
 
   const qtdAjustados = Object.keys(ajustesProdutos).length;
-  document.getElementById("resultCount").innerHTML = `${filtrados.length} produto(s) encontrado(s) ${qtdAjustados > 0 ? `• <strong style="color:#fbbf24">${qtdAjustados} produto(s) com preço/margem editado</strong>` : ""}`;
+  document.getElementById("resultCount").innerHTML = `${filtrados.length} itens ${qtdAjustados > 0 ? `• <span style="color:#fbbf24">${qtdAjustados} editado(s)</span>` : ""}`;
 
   atualizarSpotlight(filtrados[0]);
 
@@ -238,8 +233,8 @@ function renderizarProdutos() {
   if (filtrados.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align:center; padding: 36px; color: #94a3b8;">
-          Nenhum produto encontrado para "<strong>${document.getElementById("searchInput").value}</strong>".
+        <td colspan="6" style="text-align:center; padding: 32px; color: #94a3b8;">
+          Nenhum produto encontrado.
         </td>
       </tr>
     `;
@@ -255,10 +250,14 @@ function renderizarProdutos() {
     const precoEmbFinal = getPrecoEmbFinal(p);
     const catNome = MARGENS_PADRAO[p.cat]?.nome || p.cat;
 
-    const margemEmbEfetiva = p.custoEmb > 0 ? (((precoEmbFinal / p.custoEmb) - 1) * 100).toFixed(1).replace(".0", "") : margem;
+    const subInfo = [
+      p.ean && p.ean !== "SEM GTIN" ? `EAN: ${p.ean}` : null,
+      `Cód: ${p.cod}`
+    ].filter(Boolean).join(" • ");
 
     const blocoEmbalagem = p.qtdEmb > 1
-      ? `<div class="inline-pack-wrap ${typeof aj.precoEmbCustom === 'number' ? 'custom-active' : ''}" title="Clique para editar o valor final do Fardo / Caixa / Display diretamente">
+      ? `<span class="mobile-label">Caixa / Fardo (${p.undCompra} c/${p.qtdEmb})</span>
+         <div class="inline-pack-wrap ${typeof aj.precoEmbCustom === 'number' ? 'custom-active' : ''}">
            <span class="rs">R$</span>
            <input
              type="number"
@@ -268,8 +267,9 @@ function renderizarProdutos() {
              value="${precoEmbFinal.toFixed(2)}"
            >
          </div>
-         <span class="pack-detail">✏️ ${p.undCompra} c/ ${p.qtdEmb} un (+${margemEmbEfetiva}%) ${mostrarCustos ? `• Custo: ${formatarMoeda(p.custoEmb)}` : ""}</span>`
-      : `<div class="inline-pack-wrap ${typeof aj.precoEmbCustom === 'number' ? 'custom-active' : ''}" title="Você pode informar um valor de Fardo/Caixa manualmente se vender em caixa">
+         <span class="pack-detail">${p.undCompra} c/${p.qtdEmb} un</span>`
+      : `<span class="mobile-label">Caixa / Fardo (Opcional)</span>
+         <div class="inline-pack-wrap ${typeof aj.precoEmbCustom === 'number' ? 'custom-active' : ''}">
            <span class="rs">R$</span>
            <input
              type="number"
@@ -279,42 +279,41 @@ function renderizarProdutos() {
              placeholder="—"
              value="${typeof aj.precoEmbCustom === 'number' ? aj.precoEmbCustom.toFixed(2) : ''}"
            >
-         </div>
-         <span class="pack-detail">✏️ Caixa/Fardo opcional (${p.undCompra})</span>`;
+         </div>`;
 
     return `
       <tr data-id="${id}">
-        <td>
-          <div class="prod-name">${p.desc}</div>
-          <div class="prod-sub">
-            <span><strong>EAN:</strong> ${p.ean}</span>
-            <span><strong>Cód:</strong> ${p.cod}</span>
-            <span><strong>NF:</strong> ${p.nf}</span>
+        <td class="cell-prod">
+          <div>
+            <div class="prod-name">${p.desc}</div>
+            <div class="prod-sub">${subInfo}</div>
           </div>
+          <span class="badge badge-${p.cat} mobile-label" style="display:inline-block">${catNome}</span>
         </td>
-        <td>
+        <td class="cell-cat">
           <span class="badge badge-${p.cat}">${catNome}</span>
         </td>
-        <td class="col-custo" style="${mostrarCustos ? "" : "display:none;"}">
-          <div class="cost-text"><strong>${formatarMoeda(p.custoUnit)}</strong> / un</div>
-          ${p.qtdEmb > 1 ? `<div class="pack-detail">${p.undCompra} c/${p.qtdEmb}: ${formatarMoeda(p.custoEmb)}</div>` : ""}
+        <td class="cell-custo col-custo" style="${mostrarCustos ? "" : "display:none;"}">
+          <div class="cost-text">Custo: <strong>${formatarMoeda(p.custoUnit)}</strong></div>
+          ${p.qtdEmb > 1 ? `<div class="pack-detail">${p.undCompra}: ${formatarMoeda(p.custoEmb)}</div>` : ""}
         </td>
-        <td>
-          <div class="inline-edit-group ${isCustom ? 'custom-active' : ''}" title="Clique para alterar a margem deste produto (recalcula Unidade e Caixa)">
+        <td class="cell-margin">
+          <div class="inline-edit-group ${isCustom ? 'custom-active' : ''}">
             <span>+</span>
             <input
               type="number"
               step="0.5"
               class="inline-margin-input"
               data-id="${id}"
-              value="${Number(margem.toFixed(2))}"
+              value="${Number(margem.toFixed(1))}"
             >
             <span>%</span>
           </div>
-          ${isCustom ? `<button class="reset-item-btn" data-reset-id="${id}" title="Voltar para a margem padrão da categoria">Padrão</button>` : `<span class="edit-hint">✏️ Editável</span>`}
+          ${isCustom ? `<button class="reset-item-btn" data-reset-id="${id}">↺</button>` : ""}
         </td>
-        <td>
-          <div class="inline-price-wrap ${typeof aj.precoUnitCustom === 'number' ? 'custom-active' : ''}" title="Digite o preço final da UNIDADE">
+        <td class="cell-unit">
+          <span class="mobile-label">Preço Unidade</span>
+          <div class="inline-price-wrap ${typeof aj.precoUnitCustom === 'number' ? 'custom-active' : ''}">
             <span class="rs">R$</span>
             <input
               type="number"
@@ -324,16 +323,15 @@ function renderizarProdutos() {
               value="${precoUnitFinal.toFixed(2)}"
             >
           </div>
-          <span class="edit-hint">✏️ Preço Unidade</span>
         </td>
-        <td>
+        <td class="cell-pack">
           ${blocoEmbalagem}
         </td>
       </tr>
     `;
   }).join("");
 
-  // 1) Eventos de edição de margem individual (%) -> atualiza Unidade e Caixa juntos
+  // 1) Editar Margem (%)
   tbody.querySelectorAll(".inline-margin-input").forEach(input => {
     input.addEventListener("change", e => {
       const id = e.target.getAttribute("data-id");
@@ -346,7 +344,7 @@ function renderizarProdutos() {
     });
   });
 
-  // 2) Eventos de edição direta do Preço Final da UNIDADE (R$)
+  // 2) Editar Preço Unidade (R$)
   tbody.querySelectorAll(".inline-price-input").forEach(input => {
     input.addEventListener("change", e => {
       const id = e.target.getAttribute("data-price-id");
@@ -366,7 +364,7 @@ function renderizarProdutos() {
     });
   });
 
-  // 3) Eventos de edição direta do Preço Final da CAIXA / FARDO / DISPLAY (R$)
+  // 3) Editar Preço Caixa / Fardo (R$)
   tbody.querySelectorAll(".inline-pack-input").forEach(input => {
     input.addEventListener("change", e => {
       const id = e.target.getAttribute("data-pack-id");
@@ -389,8 +387,6 @@ function renderizarProdutos() {
           ...atual,
           precoEmbCustom: novoPrecoEmb
         };
-        // Se o usuário ainda não tinha travado um preço unitário manual e o produto tem qtdEmb > 1,
-        // mantém o preço unitário atual ou deixa independente para ele ter preço de varejo (UN) e atacado (CX/FD) diferentes!
         if (typeof atual.precoUnitCustom !== "number" && typeof atual.margemCustom !== "number") {
           ajustesProdutos[id].margemCustom = margensAtuais[prod.cat] || 0;
         }
@@ -400,7 +396,7 @@ function renderizarProdutos() {
     });
   });
 
-  // Botão para resetar ajuste individual de um produto
+  // Resetar item individual
   tbody.querySelectorAll(".reset-item-btn").forEach(btn => {
     btn.addEventListener("click", e => {
       const id = e.target.getAttribute("data-reset-id");
@@ -438,7 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   resetMarginsBtn.addEventListener("click", () => {
-    if (confirm("Deseja restaurar todas as margens das categorias e limpar os ajustes individuais de produtos?")) {
+    if (confirm("Restaurar todas as margens padrão e limpar preços editados?")) {
       Object.keys(MARGENS_PADRAO).forEach(k => {
         margensAtuais[k] = MARGENS_PADRAO[k].perc;
       });
@@ -453,11 +449,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   toggleCostBtn.addEventListener("click", () => {
     mostrarCustos = !mostrarCustos;
-    toggleCostBtn.textContent = mostrarCustos ? "👁️ Ocultar Custo NF" : "👁️ Mostrar Custo NF";
+    toggleCostBtn.classList.toggle("active-toggle", mostrarCustos);
     renderizarProdutos();
   });
 
-  // Atalho F2 ou "/" para focar direto na barra de pesquisa
   document.addEventListener("keydown", e => {
     if (e.key === "F2" || (e.key === "/" && document.activeElement.tagName !== "INPUT")) {
       e.preventDefault();

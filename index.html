@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caixa de Consulta Rápida - Depósito de Bebidas Reunidas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Consulta de Preços — Depósito de Bebidas Reunidas</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,17 +12,17 @@
     <div class="header-top">
       <div class="brand">
         <div class="brand-icon">R$</div>
-        <div>
-          <h1>Consulta Rápida de Preços — Depósito de Bebidas Reunidas</h1>
-          <p>Bebidas, Sorvetes, Balas e Alimentos (Preços finais ao cliente já com margem aplicada)</p>
+        <div class="brand-text">
+          <h1>Depósito de Bebidas Reunidas</h1>
+          <p>Consulta Rápida de Preços</p>
         </div>
       </div>
       <div class="header-actions">
-        <button id="toggleCostBtn" class="btn" title="Ocultar ou mostrar o preço de custo da Nota Fiscal">
-          👁️ Ocultar Custo NF
+        <button id="toggleCostBtn" class="btn btn-sm" title="Mostrar ou ocultar preço de custo da Nota Fiscal">
+          👁️ Custo NF
         </button>
-        <button id="toggleMarginsBtn" class="btn btn-primary">
-          ⚙️ Margens de Lucro (%)
+        <button id="toggleMarginsBtn" class="btn btn-sm btn-primary">
+          ⚙️ Margens (%)
         </button>
       </div>
     </div>
@@ -30,49 +30,50 @@
     <div class="search-container">
       <span class="search-icon">🔍</span>
       <input
-        type="text"
+        type="search"
         id="searchInput"
         class="search-input"
-        placeholder="Bipe o Código de Barras (EAN) ou digite o nome do produto, marca ou código (Atalho: F2)..."
+        placeholder="Buscar produto, marca ou código de barras..."
+        autocomplete="off"
         autofocus
       >
-      <button id="clearSearchBtn" class="clear-btn">Limpar (ESC)</button>
+      <button id="clearSearchBtn" class="clear-btn">✕</button>
     </div>
   </header>
 
   <main class="container">
-    <!-- Painel de Margens de Lucro Editáveis -->
-    <section id="marginsPanel" class="margins-panel">
+    <!-- Painel de Margens de Lucro (Fechado por padrão para não poluir a tela) -->
+    <section id="marginsPanel" class="margins-panel closed">
       <div class="margins-header">
-        <h3>📊 Tabela de Margens Aplicadas sobre a Nota Fiscal</h3>
-        <button id="resetMarginsBtn" class="btn">Restaurar Margens da Imagem</button>
+        <h3>📊 Margem Padrão por Categoria</h3>
+        <button id="resetMarginsBtn" class="btn btn-sm">Restaurar Padrão</button>
       </div>
       <div id="marginsGrid" class="margins-grid"></div>
     </section>
 
-    <!-- Filtros por Categoria -->
+    <!-- Filtros Rápidos por Categoria -->
     <div id="categoriesBar" class="categories-bar"></div>
 
-    <!-- Card em Destaque (Visor de Caixa) ao pesquisar ou bipar -->
+    <!-- Card em Destaque (Visor de Caixa) ao pesquisar -->
     <section id="spotlight" class="spotlight"></section>
 
-    <!-- Barra de status -->
+    <!-- Barra de status discreta -->
     <div class="status-bar">
-      <span id="resultCount">Carregando produtos...</span>
-      <span>Dica: Pressione <strong>F2</strong> para nova consulta ou <strong>ESC</strong> para limpar</span>
+      <span id="resultCount">Carregando...</span>
+      <span class="hint-text">Toque no preço ou % para editar</span>
     </div>
 
-    <!-- Tabela de Produtos -->
+    <!-- Lista de Produtos Responsiva (Tabela no PC / Cards limpos no Celular) -->
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Produto / Código de Barras (EAN)</th>
+            <th>Produto</th>
             <th>Categoria</th>
-            <th class="col-custo">Custo na Nota (NF)</th>
+            <th class="col-custo">Custo NF</th>
             <th>Margem</th>
-            <th>Preço Final Cliente (UN)</th>
-            <th>Preço Final Caixa / Fardo / Display</th>
+            <th>Preço Unidade</th>
+            <th>Preço Caixa / Fardo</th>
           </tr>
         </thead>
         <tbody id="productsTbody"></tbody>
