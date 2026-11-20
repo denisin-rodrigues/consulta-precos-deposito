@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caixa de Consulta Rápida - Depósito de Bebidas Reunidas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-icon">R$</div>
+        <div>
+          <h1>Consulta Rápida de Preços — Depósito de Bebidas Reunidas</h1>
+          <p>Bebidas, Sorvetes, Balas e Alimentos (Preços finais ao cliente já com margem aplicada)</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="toggleCostBtn" class="btn" title="Ocultar ou mostrar o preço de custo da Nota Fiscal">
+          👁️ Ocultar Custo NF
+        </button>
+        <button id="toggleMarginsBtn" class="btn btn-primary">
+          ⚙️ Margens de Lucro (%)
+        </button>
+      </div>
+    </div>
+
+    <div class="search-container">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="Bipe o Código de Barras (EAN) ou digite o nome do produto, marca ou código (Atalho: F2)..."
+        autofocus
+      >
+      <button id="clearSearchBtn" class="clear-btn">Limpar (ESC)</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Painel de Margens de Lucro Editáveis -->
+    <section id="marginsPanel" class="margins-panel">
+      <div class="margins-header">
+        <h3>📊 Tabela de Margens Aplicadas sobre a Nota Fiscal</h3>
+        <button id="resetMarginsBtn" class="btn">Restaurar Margens da Imagem</button>
+      </div>
+      <div id="marginsGrid" class="margins-grid"></div>
+    </section>
+
+    <!-- Filtros por Categoria -->
+    <div id="categoriesBar" class="categories-bar"></div>
+
+    <!-- Card em Destaque (Visor de Caixa) ao pesquisar ou bipar -->
+    <section id="spotlight" class="spotlight"></section>
+
+    <!-- Barra de status -->
+    <div class="status-bar">
+      <span id="resultCount">Carregando produtos...</span>
+      <span>Dica: Pressione <strong>F2</strong> para nova consulta ou <strong>ESC</strong> para limpar</span>
+    </div>
+
+    <!-- Tabela de Produtos -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Produto / Código de Barras (EAN)</th>
+            <th>Categoria</th>
+            <th class="col-custo">Custo na Nota (NF)</th>
+            <th>Margem</th>
+            <th>Preço Final Cliente (UN)</th>
+            <th>Preço Final Caixa / Fardo / Display</th>
+          </tr>
+        </thead>
+        <tbody id="productsTbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="produtos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
