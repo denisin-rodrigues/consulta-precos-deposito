@@ -477,6 +477,61 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const exportCsvBtn = document.getElementById("exportCsvBtn");
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener("click", () => {
+      const headers = [
+        "NF",
+        "Codigo",
+        "Descricao do Produto",
+        "EAN / Codigo de Barras",
+        "Categoria",
+        "Unid. Compra",
+        "Qtd na Embalagem",
+        "Custo Unitario (R$)",
+        "Custo Caixa/Fardo (R$)",
+        "Margem (%)",
+        "Preco Venda UNIDADE (R$)",
+        "Preco Venda CAIXA/FARDO (R$)"
+      ];
+      const fmt = n => Number(n).toFixed(2).replace(".", ",");
+      const rows = [headers.join(";")];
+
+      PRODUTOS_NF.forEach(p => {
+        const margem = getMargemProduto(p);
+        const precoUnit = getPrecoUnitFinal(p);
+        const precoEmb = getPrecoEmbFinal(p);
+        const catNome = (MARGENS_PADRAO[p.cat]?.nome || p.cat).replace(/^[^\wÀ-ú]+\s*/, "");
+        const safeDesc = '"' + String(p.desc).replace(/"/g, '""') + '"';
+
+        rows.push([
+          p.nf,
+          p.cod,
+          safeDesc,
+          p.ean,
+          catNome,
+          p.undCompra,
+          p.qtdEmb,
+          fmt(p.custoUnit),
+          fmt(p.custoEmb),
+          fmt(margem) + "%",
+          fmt(precoUnit),
+          p.qtdEmb > 1 || typeof (ajustesProdutos[getProdutoId(p)] || {}).precoEmbCustom === "number" ? fmt(precoEmb) : fmt(precoUnit)
+        ].join(";"));
+      });
+
+      const blob = new Blob(["\uFEFF" + rows.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "planilha-produtos-cadastrados-deposito.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+
   document.addEventListener("keydown", e => {
     if (e.key === "F2" || (e.key === "/" && document.activeElement.tagName !== "INPUT")) {
       e.preventDefault();
