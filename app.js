@@ -481,18 +481,28 @@ document.addEventListener("DOMContentLoaded", () => {
   if (exportCsvBtn) {
     exportCsvBtn.addEventListener("click", () => {
       const headers = [
-        "NF",
-        "Codigo",
+        "Num. NF",
+        "Codigo Produto (NF)",
+        "Codigo de Barras (EAN / GTIN)",
         "Descricao do Produto",
-        "EAN / Codigo de Barras",
         "Categoria",
-        "Unid. Compra",
-        "Qtd na Embalagem",
-        "Custo Unitario (R$)",
-        "Custo Caixa/Fardo (R$)",
-        "Margem (%)",
+        "NCM (Codigo Fiscal)",
+        "CFOP Entrada (NF)",
+        "CFOP Venda Balcao (PDV)",
+        "CST ICMS (Regime Normal)",
+        "CSOSN (Simples Nacional)",
+        "Origem Fiscal",
+        "Unid. Comercial",
+        "Unid. Tributavel",
+        "Qtd por Caixa/Fardo",
+        "Custo Unitario NF (R$)",
+        "Custo Caixa/Fardo NF (R$)",
+        "Margem Lucro (%)",
         "Preco Venda UNIDADE (R$)",
-        "Preco Venda CAIXA/FARDO (R$)"
+        "Preco Venda CAIXA/FARDO (R$)",
+        "CNPJ Fornecedor",
+        "Razao Social Fornecedor",
+        "Chave de Acesso NF-e (44 digitos)"
       ];
       const fmt = n => Number(n).toFixed(2).replace(".", ",");
       const rows = [headers.join(";")];
@@ -503,20 +513,33 @@ document.addEventListener("DOMContentLoaded", () => {
         const precoEmb = getPrecoEmbFinal(p);
         const catNome = (MARGENS_PADRAO[p.cat]?.nome || p.cat).replace(/^[^\wÀ-ú]+\s*/, "");
         const safeDesc = '"' + String(p.desc).replace(/"/g, '""') + '"';
+        const safeForn = '"' + String(p.fornecedor || "").replace(/"/g, '""') + '"';
+        const eanExcel = p.ean && p.ean !== "SEM GTIN" ? `="${p.ean}"` : "SEM GTIN";
+        const chaveExcel = p.chaveNfe ? `="${p.chaveNfe}"` : "";
 
         rows.push([
           p.nf,
           p.cod,
+          eanExcel,
           safeDesc,
-          p.ean,
           catNome,
+          `="${p.ncm || ""}"`,
+          p.cfopEntrada || "",
+          p.cfopVendaSugerido || "",
+          `="${p.cstIcmsSugerido || ""}"`,
+          p.csosnSimplesSugerido || "",
+          "0",
           p.undCompra,
+          p.undTrib || p.undCompra,
           p.qtdEmb,
           fmt(p.custoUnit),
           fmt(p.custoEmb),
           fmt(margem) + "%",
           fmt(precoUnit),
-          p.qtdEmb > 1 || typeof (ajustesProdutos[getProdutoId(p)] || {}).precoEmbCustom === "number" ? fmt(precoEmb) : fmt(precoUnit)
+          p.qtdEmb > 1 || typeof (ajustesProdutos[getProdutoId(p)] || {}).precoEmbCustom === "number" ? fmt(precoEmb) : fmt(precoUnit),
+          `="${p.cnpjFornecedor || ""}"`,
+          safeForn,
+          chaveExcel
         ].join(";"));
       });
 
